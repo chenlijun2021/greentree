@@ -91,14 +91,37 @@
             </div>
 
             <!-- Wheat Wave Wind Mode Switch -->
-            <div class="flex items-center justify-between py-1 border-y border-gray-100 my-2">
+            <div class="flex items-center justify-between py-1 border-t border-gray-100 mt-2 pt-2">
                 <div>
-                    <span class="block text-xs font-medium text-gray-700">Wheat Wave Mode (麦浪风)</span>
-                    <span class="text-[10px] text-gray-400">Localized ripple gusts sweeping across canopy</span>
+                    <span class="block text-xs font-medium text-gray-700">Wheat Wave (麦浪风)</span>
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" id="wheat-wave-toggle" class="sr-only peer">
                     <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-600"></div>
+                </label>
+            </div>
+
+            <!-- Colorful Mode Switch -->
+            <div class="flex items-center justify-between py-1">
+                <div>
+                    <span class="block text-xs font-medium text-gray-700">Colorful Drop (五彩缤纷)</span>
+                    <span class="text-[10px] text-gray-400">Falling elements become colorful</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="colorful-toggle" class="sr-only peer">
+                    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-500"></div>
+                </label>
+            </div>
+
+            <!-- Transform Mode Switch -->
+            <div class="flex items-center justify-between py-1 border-b border-gray-100 mb-2 pb-2">
+                <div>
+                    <span class="block text-xs font-medium text-gray-700">Deform Drop (星月变形)</span>
+                    <span class="text-[10px] text-gray-400">Transform to flat stars & moons</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="transform-toggle" class="sr-only peer">
+                    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-500"></div>
                 </label>
             </div>
 
@@ -114,7 +137,7 @@
             <!-- Leaf Size -->
             <div>
                 <label class="flex justify-between text-xs font-medium text-gray-600 mb-1">
-                    <span>Leaf Size</span>
+                    <span>Element Size</span>
                     <span id="size-val" class="text-gray-400">14</span>
                 </label>
                 <input type="range" id="char-size" min="8" max="32" value="14" class="w-full accent-green-600">
@@ -138,7 +161,7 @@
                 <input type="range" id="density" min="30" max="250" value="100" class="w-full accent-green-600">
             </div>
 
-            <!-- Tree Spread (New) -->
+            <!-- Tree Spread -->
             <div>
                 <label class="flex justify-between text-xs font-medium text-gray-600 mb-1">
                     <span>Tree Spread (左右宽度)</span>
@@ -200,6 +223,8 @@
             stemWidth: 0.8,
             stemOpacity: 0.45,
             wheatWave: false,
+            colorfulMode: false,
+            transformMode: false,
             charSize: 14,
             branchLength: 75,
             density: 100,
@@ -217,9 +242,114 @@
         let isFadingOut = false;
         let simTime = 0;
         
-        let pg; // Offscreen trail layer
-        let letterSprites = {}; 
+        let pg; 
+        
+        // High-performance Sprite Engine to prevent stuttering.
+        // Pre-allocates and caches graphics objects for O(1) rendering during falls.
         const chars = "abcdefghijklmnopqrstuvwxyz";
+        const vibrantColors = [
+            '#FF3B30', // Red
+            '#FF9500', // Orange
+            '#FFCC00', // Yellow
+            '#4CD964', // Green
+            '#5AC8FA', // Light Blue
+            '#007AFF', // Blue
+            '#AF52DE', // Purple
+            '#FF2D55'  // Pink
+        ];
+        
+        let spriteGraphicsPool = {}; // Retains canvas contexts to avoid GC overhead
+        let spriteCache = {}; // Quick lookup mapping to the canvases
+
+        function getOrCreateGraphics(key, size) {
+            if (!spriteGraphicsPool[key]) {
+                let g = createGraphics(size, size);
+                g.pixelDensity(1);
+                spriteGraphicsPool[key] = g;
+            }
+            return spriteGraphicsPool[key];
+        }
+
+        function generateAllSprites() {
+            spriteCache = {};
+            const spriteSize = Math.max(32, config.charSize * 2); 
+            const center = spriteSize / 2;
+
+            let colorsToGenerate = ['default'].concat(vibrantColors);
+            let shapesToGenerate = ['char', 'star', 'moon'];
+
+            for (let colKey of colorsToGenerate) {
+                let activeColor = (colKey === 'default') ? config.charColor : colKey;
+
+                for (let shape of shapesToGenerate) {
+                    if (shape === 'char') {
+                        // Generate all characters
+                        for (let i = 0; i < chars.length; i++) {
+                            let charVal = chars[i];
+                            let key = `${colKey}_char_${charVal}`;
+                            let g = getOrCreateGraphics(key, spriteSize);
+                            
+                            g.clear();
+                            g.textAlign(CENTER, CENTER);
+                            g.textSize(config.charSize);
+                            g.fill(activeColor);
+                            g.noStroke();
+                            g.text(charVal, center, center);
+                            
+                            spriteCache[key] = g.canvas;
+                        }
+                    } else if (shape === 'star') {
+                        // Generate flat star
+                        let key = `${colKey}_star`;
+                        let g = getOrCreateGraphics(key, spriteSize);
+                        
+                        g.clear();
+                        g.fill(activeColor);
+                        g.noStroke();
+                        
+                        g.push();
+                        g.translate(center, center);
+                        let r1 = config.charSize * 0.25;
+                        let r2 = config.charSize * 0.6;
+                        let angle = TWO_PI / 5;
+                        let halfAngle = angle / 2.0;
+                        g.beginShape();
+                        for (let a = -PI/2; a < TWO_PI-PI/2; a += angle) {
+                            g.vertex(cos(a) * r2, sin(a) * r2);
+                            g.vertex(cos(a + halfAngle) * r1, sin(a + halfAngle) * r1);
+                        }
+                        g.endShape(CLOSE);
+                        g.pop();
+                        
+                        spriteCache[key] = g.canvas;
+                    } else if (shape === 'moon') {
+                        // Generate flat crescent moon
+                        let key = `${colKey}_moon`;
+                        let g = getOrCreateGraphics(key, spriteSize);
+                        
+                        g.clear();
+                        g.noStroke();
+                        g.push();
+                        g.translate(center, center);
+                        
+                        let moonSize = config.charSize * 1.1;
+                        
+                        // Draw outer circle
+                        g.fill(activeColor);
+                        g.ellipse(0, 0, moonSize);
+                        
+                        // Erase inner circle to make it a sharp crescent
+                        g.erase();
+                        g.ellipse(-moonSize * 0.2, -moonSize * 0.2, moonSize * 0.95);
+                        g.noErase();
+                        
+                        g.pop();
+                        
+                        spriteCache[key] = g.canvas;
+                    }
+                }
+            }
+        }
 
         const uiBindings = [
             { inputId: 'bg-color', valId: 'bg-val', key: 'bgColor', parse: null },
@@ -251,7 +381,7 @@
                         document.body.style.backgroundColor = config.bgColor;
                     }
                     if (binding.key === 'charColor' || binding.key === 'charSize') {
-                        generateLetterSprites();
+                        generateAllSprites();
                     }
                     if (binding.key === 'branchLength' || binding.key === 'density' || binding.key === 'clustering' || binding.key === 'treeSpread') {
                         generateBranches();
@@ -260,12 +390,14 @@
             }
         });
 
-        const wheatToggle = document.getElementById('wheat-wave-toggle');
-        if (wheatToggle) {
-            wheatToggle.addEventListener('change', (e) => {
-                config.wheatWave = e.target.checked;
-            });
-        }
+        // Toggle Bindings
+        const setupToggle = (id, key) => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', (e) => { config[key] = e.target.checked; });
+        };
+        setupToggle('wheat-wave-toggle', 'wheatWave');
+        setupToggle('colorful-toggle', 'colorfulMode');
+        setupToggle('transform-toggle', 'transformMode');
 
         document.getElementById('toggle-ui').addEventListener('click', () => {
             document.getElementById('ui-panel').classList.add('translate-x-[120%]');
@@ -288,33 +420,20 @@
                     valEl.innerText = binding.suffix ? config[binding.key] + binding.suffix : config[binding.key];
                 }
             });
-            if (wheatToggle) wheatToggle.checked = defaultConfig.wheatWave;
+            
+            document.getElementById('wheat-wave-toggle').checked = config.wheatWave;
+            document.getElementById('colorful-toggle').checked = config.colorfulMode;
+            document.getElementById('transform-toggle').checked = config.transformMode;
+            
             document.body.style.backgroundColor = config.bgColor;
             
             isWaterfall = false;
             isFadingOut = false;
             particles = [];
             if (pg) pg.clear();
-            generateLetterSprites();
+            generateAllSprites();
             generateBranches();
         });
-
-        function generateLetterSprites() {
-            letterSprites = {};
-            const spriteSize = Math.max(32, config.charSize * 2); 
-            
-            for (let i = 0; i < chars.length; i++) {
-                let char = chars[i];
-                let g = createGraphics(spriteSize, spriteSize);
-                g.pixelDensity(1);
-                g.textAlign(CENTER, CENTER);
-                g.textSize(config.charSize);
-                g.fill(config.charColor);
-                g.noStroke();
-                g.text(char, spriteSize / 2, spriteSize / 2);
-                letterSprites[char] = g;
-            }
-        }
 
         class WillowBranch {
             constructor(x) {
@@ -359,6 +478,33 @@
                 this.isDetaching = true;
                 this.currentDetachSeg = this.numSegments;
             }
+            
+            // Helper to dynamically get the proper assigned sprite when dropping
+            spawnParticle(x, y, scale, angle, baseChar) {
+                let isColorful = config.colorfulMode;
+                let isTransform = config.transformMode;
+
+                let colKey = isColorful ? vibrantColors[floor(random(vibrantColors.length))] : 'default';
+                let shapeType = 'char';
+                let cVal = baseChar;
+
+                if (isTransform) {
+                    shapeType = random(['star', 'moon']);
+                    cVal = ''; // Char not needed for stars/moons
+                    angle = random(TWO_PI); // Give moons/stars a random spin
+                }
+
+                let cacheKey = shapeType === 'char' ? `${colKey}_char_${cVal}` : `${colKey}_${shapeType}`;
+                
+                particles.push({
+                    x: x,
+                    y: y,
+                    g: 0,
+                    s: config.charSize * scale,
+                    angle: angle,
+                    spriteCanvas: spriteCache[cacheKey] 
+                });
+            }
 
             update(t, wForce) {
                 let currentX = this.rootX;
@@ -400,32 +546,30 @@
                         for (let i = this.leaves.length - 1; i >= 0; i--) {
                             let leaf = this.leaves[i];
                             if (leaf.segIdx > this.currentDetachSeg) {
-                                // If retention randomly generated value is larger than the slider setting, drop it
                                 if (leaf.retentionValue >= config.retainLeaves) {
                                     let p = this.segments[leaf.segIdx];
                                     if (p) {
-                                        particles.push({
-                                            x: p.x + leaf.offsetX,
-                                            y: p.y + leaf.offsetY,
-                                            g: 0,
-                                            s: config.charSize * leaf.scaleMod,
-                                            char: leaf.char,
-                                            angle: leaf.angle
-                                        });
+                                        this.spawnParticle(
+                                            p.x + leaf.offsetX, 
+                                            p.y + leaf.offsetY, 
+                                            leaf.scaleMod, 
+                                            leaf.angle, 
+                                            leaf.char
+                                        );
                                     }
                                     this.leaves.splice(i, 1); 
                                 }
                             }
                         }
                     } else if (!isFadingOut) {
-                        particles.push({
-                            x: this.rootX + random(-15, 15),
-                            y: random(-20, 0),
-                            g: 0,
-                            s: config.charSize * random(0.7, 1.2),
-                            char: chars.charAt(floor(random(chars.length))),
-                            angle: random(-PI / 4, PI / 4)
-                        });
+                        // Continuous waterfall spigot
+                        this.spawnParticle(
+                            this.rootX + random(-15, 15),
+                            random(-20, 0),
+                            random(0.7, 1.2),
+                            random(-PI / 4, PI / 4),
+                            chars.charAt(floor(random(chars.length)))
+                        );
                     }
                 }
             }
@@ -434,7 +578,7 @@
                 let ctx = ctxParam || (typeof drawingContext !== 'undefined' ? drawingContext : null);
                 if (!ctx || typeof ctx.beginPath !== 'function') return;
 
-                // Render stem line with configurable thickness and opacity
+                // Render stem line
                 if (this.segments.length > 1) {
                     ctx.beginPath();
                     ctx.moveTo(this.segments[0].x, this.segments[0].y);
@@ -448,17 +592,18 @@
                     ctx.globalAlpha = 1.0;
                 }
 
-                // Render attached leaves
+                // Render attached leaves (Always normal character until detached)
                 for (let leaf of this.leaves) {
                     let p = this.segments[leaf.segIdx];
                     if (p) {
-                        let sprite = letterSprites[leaf.char];
-                        if (sprite && sprite.canvas) {
+                        // Tree leaves are strictly default color characters
+                        let spriteCanvas = spriteCache[`default_char_${leaf.char}`];
+                        if (spriteCanvas) {
                             let drawSize = config.charSize * leaf.scaleMod;
                             ctx.save();
                             ctx.translate(p.x + leaf.offsetX, p.y + leaf.offsetY);
                             if (leaf.angle) ctx.rotate(leaf.angle);
-                            ctx.drawImage(sprite.canvas, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+                            ctx.drawImage(spriteCanvas, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
                             ctx.restore();
                         }
                     }
@@ -474,7 +619,7 @@
             pg = createGraphics(windowWidth, windowHeight); 
             imageMode(CENTER);
             
-            generateLetterSprites();
+            generateAllSprites();
             generateBranches();
         }
 
@@ -510,12 +655,12 @@
             simTime++;
             background(config.bgColor);
 
-            // 1. Update branch physics FIRST so leaves perfectly detach into the waterfall buffer below
+            // 1. Update branch physics
             for (let b of branches) {
                 b.update(simTime, config.windForce);
             }
 
-            // 2. Handle waterfall particles on the offscreen trail buffer
+            // 2. Process High-Performance Offscreen Particle Layer
             if (isWaterfall && pg && pg.drawingContext) {
                 let pctx = pg.drawingContext;
 
@@ -524,14 +669,12 @@
                 pctx.fillRect(0, 0, pg.width, pg.height);
                 pctx.globalCompositeOperation = 'source-over';
 
-                // High-performance O(1) particle removal loop
                 for (let i = particles.length - 1; i >= 0; i--) {
                     let p = particles[i];
                     p.s *= 0.998; 
                     
                     let N = noise(p.x / width, p.y / 9, simTime / width);
 
-                    // Fluid Perlin movement logic
                     if (N > 0.4) {
                         p.x += 0;
                         p.g += 0.5 * config.fallRate; 
@@ -541,21 +684,22 @@
                         else { p.x -= 1.5 * config.fallRate; } 
                         p.g = 0;
                         p.y += 0.5 * config.fallRate; 
+                        
+                        // Add slight rotation to shapes as they fall
+                        if (config.transformMode) p.angle += 0.03;
                     }
 
-                    let sprite = letterSprites[p.char];
-                    if (sprite && sprite.canvas) {
-                        // Boost initial alpha slightly to guarantee smooth transition from branch leaf
+                    // Blazing fast O(1) cached texture stamp
+                    if (p.spriteCanvas) {
                         let alpha = Math.min(1.0, Math.max(0.05, (p.s / config.charSize) * 1.2));
                         pctx.save();
                         pctx.globalAlpha = alpha;
                         pctx.translate(p.x, p.y);
                         if (p.angle) pctx.rotate(p.angle);
-                        pctx.drawImage(sprite.canvas, -p.s / 2, -p.s / 2, p.s, p.s);
+                        pctx.drawImage(p.spriteCanvas, -p.s / 2, -p.s / 2, p.s, p.s);
                         pctx.restore();
                     }
 
-                    // Garbage collect off-screen particles
                     if (p.y > height + 50 || p.s < 1) {
                         particles.splice(i, 1);
                     }
@@ -566,7 +710,7 @@
                 imageMode(CENTER);
             }
 
-            // 3. Render crisp tree branches and attached leaves onto the main canvas
+            // 3. Render tree branches to main canvas
             let mainCtx = typeof drawingContext !== 'undefined' ? drawingContext : null;
             if (mainCtx) {
                 for (let b of branches) {

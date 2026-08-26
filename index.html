@@ -13,7 +13,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #f4f7f4;
+            background: linear-gradient(to bottom, #f4f7f4, #e6efe6);
             font-family: 'Inter', sans-serif;
         }
         canvas {
@@ -30,6 +30,27 @@
             background: #cbd5e1;
             border-radius: 4px;
         }
+        .file-input-btn {
+            display: inline-block;
+            padding: 0.35rem 0.6rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #374151;
+            background-color: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .file-input-btn:hover {
+            background-color: #e5e7eb;
+            border-color: #9ca3af;
+        }
     </style>
 </head>
 <body>
@@ -45,12 +66,84 @@
         </div>
 
         <div class="space-y-4 max-h-[78vh] overflow-y-auto pr-2">
-            <!-- Background Color -->
-            <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">Background Color</label>
-                <div class="flex items-center gap-3">
-                    <input type="color" id="bg-color" value="#f4f7f4" class="w-8 h-8 rounded cursor-pointer border-0 p-0">
-                    <span class="text-xs text-gray-500 font-mono uppercase" id="bg-val">#f4f7f4</span>
+            
+            <!-- Overall Scale -->
+            <div class="bg-green-50/60 p-2.5 rounded-lg border border-green-100">
+                <label class="flex justify-between text-xs font-semibold text-green-900 mb-1">
+                    <span>Overall Scale (整体缩放)</span>
+                    <span id="scale-val" class="text-green-700">1.0x</span>
+                </label>
+                <input type="range" id="global-scale" min="0.5" max="2.2" step="0.05" value="1.0" class="w-full accent-green-600">
+                <p class="text-[10px] text-green-700/80 mt-1">High-DPI crisp zooming without blur</p>
+            </div>
+
+            <!-- Butterfly Settings Section -->
+            <div class="bg-blue-50/60 p-3 rounded-lg border border-blue-100 space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold text-blue-900 uppercase tracking-wide">Butterfly (随风蝴蝶)</span>
+                    <span id="bf-status" class="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">Flying</span>
+                </div>
+
+                <!-- Butterfly Size -->
+                <div>
+                    <label class="flex justify-between text-xs font-medium text-gray-600 mb-1">
+                        <span>Butterfly Size (蝴蝶大小)</span>
+                        <span id="bf-size-val" class="text-gray-400">36px</span>
+                    </label>
+                    <input type="range" id="bf-size" min="14" max="90" value="36" class="w-full accent-blue-500">
+                </div>
+
+                <!-- Butterfly Flap Speed (NEW) -->
+                <div>
+                    <label class="flex justify-between text-xs font-medium text-gray-600 mb-1">
+                        <span>Flap Rate (翅膀扑腾速率)</span>
+                        <span id="bf-flap-val" class="text-blue-600 font-semibold">1.5x</span>
+                    </label>
+                    <input type="range" id="bf-flap-speed" min="0.4" max="3.5" step="0.1" value="1.5" class="w-full accent-blue-500">
+                </div>
+
+                <!-- 2-Frame Custom Uploads -->
+                <div class="space-y-2 pt-1 border-t border-blue-100">
+                    <label class="block text-xs font-medium text-gray-600">Custom Texture Upload (两帧替换)</label>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label for="bf-file1" id="bf-label1" class="file-input-btn">
+                                Frame 1 (展开)
+                            </label>
+                            <input type="file" id="bf-file1" accept="image/*" class="hidden">
+                        </div>
+                        <div>
+                            <label for="bf-file2" id="bf-label2" class="file-input-btn">
+                                Frame 2 (收拢)
+                            </label>
+                            <input type="file" id="bf-file2" accept="image/*" class="hidden">
+                        </div>
+                    </div>
+                    <button id="reset-bf-img" class="w-full text-[10px] text-blue-600 hover:text-blue-800 underline text-center block pt-0.5">
+                        Reset to default vector butterfly
+                    </button>
+                </div>
+            </div>
+
+            <!-- Gradient Background Color 1 & 2 (NEW) -->
+            <div class="bg-gray-50/80 p-2.5 rounded-lg border border-gray-100 space-y-2">
+                <label class="block text-xs font-medium text-gray-700">Gradient Background (渐变背景色)</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <span class="block text-[10px] text-gray-500 mb-1">Top (顶部)</span>
+                        <div class="flex items-center gap-2">
+                            <input type="color" id="bg-color" value="#f4f7f4" class="w-7 h-7 rounded cursor-pointer border-0 p-0">
+                            <span class="text-[10px] text-gray-500 font-mono uppercase" id="bg-val">#f4f7f4</span>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] text-gray-500 mb-1">Bottom (底部)</span>
+                        <div class="flex items-center gap-2">
+                            <input type="color" id="bg-color-2" value="#e6efe6" class="w-7 h-7 rounded cursor-pointer border-0 p-0">
+                            <span class="text-[10px] text-gray-500 font-mono uppercase" id="bg-val-2">#e6efe6</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -199,7 +292,7 @@
             
             <div class="pt-3 border-t border-gray-100">
                 <p class="text-[11px] text-gray-500 leading-tight mb-3 bg-gray-50 p-2 rounded">
-                    <strong>D</strong> - Trigger waterfall shedding<br>
+                    <strong>D Key</strong> - Shed leaves & Spook butterfly to flee<br>
                     <strong>Space</strong> - Stop top stream & drain waterfall
                 </p>
                 <button id="reset-btn" class="w-full bg-red-50 hover:bg-red-100 text-red-600 font-medium py-1.5 px-4 rounded-lg transition-colors border border-red-200 text-sm shadow-sm">
@@ -217,7 +310,11 @@
 
     <script>
         const defaultConfig = {
+            globalScale: 1.0,
+            butterflySize: 36,
+            flapSpeed: 1.5,
             bgColor: '#f4f7f4',
+            bgColor2: '#e6efe6',
             charColor: '#5b8c5a',
             stemColor: '#88aa86',
             stemWidth: 0.8,
@@ -243,36 +340,113 @@
         let simTime = 0;
         
         let pg; 
+
+        // Agile Butterfly State
+        let butterfly = {
+            x: 0,
+            y: 0,
+            vx: 0,
+            vy: 0,
+            targetX: 0,
+            targetY: 0,
+            state: 'FLYING', // 'FLYING', 'PERCHED', 'FLEEING'
+            perchTimer: 0,
+            perchBranchIdx: -1,
+            perchSegIdx: -1,
+            perchOffsetX: 0,
+            perchOffsetY: 0,
+            flapPhase: 0,
+            angle: 0,
+            bobPhase: 0,
+            customImg1: null,
+            customImg2: null
+        };
         
-        // High-performance Sprite Engine to prevent stuttering.
-        // Pre-allocates and caches graphics objects for O(1) rendering during falls.
         const chars = "abcdefghijklmnopqrstuvwxyz";
         const vibrantColors = [
-            '#FF3B30', // Red
-            '#FF9500', // Orange
-            '#FFCC00', // Yellow
-            '#4CD964', // Green
-            '#5AC8FA', // Light Blue
-            '#007AFF', // Blue
-            '#AF52DE', // Purple
-            '#FF2D55'  // Pink
+            '#FF3B30', '#FF9500', '#FFCC00', '#4CD964',
+            '#5AC8FA', '#007AFF', '#AF52DE', '#FF2D55'
         ];
         
-        let spriteGraphicsPool = {}; // Retains canvas contexts to avoid GC overhead
-        let spriteCache = {}; // Quick lookup mapping to the canvases
+        let spriteGraphicsPool = {};
+        let spriteCache = {};
+        let defaultBfSprites = [];
 
         function getOrCreateGraphics(key, size) {
             if (!spriteGraphicsPool[key]) {
                 let g = createGraphics(size, size);
-                g.pixelDensity(1);
+                g.pixelDensity(window.devicePixelRatio || 1);
                 spriteGraphicsPool[key] = g;
             }
             return spriteGraphicsPool[key];
         }
 
+        function generateDefaultButterflySprites() {
+            let size = 128;
+            let center = size / 2;
+            
+            // Frame 1: Wings Open Wide
+            let g1 = createGraphics(size, size);
+            g1.pixelDensity(window.devicePixelRatio || 1);
+            g1.clear();
+            g1.push();
+            g1.translate(center, center);
+            
+            g1.noStroke();
+            g1.fill(60, 180, 220, 220);
+            g1.ellipse(-26, -14, 46, 62);
+            g1.ellipse(26, -14, 46, 62);
+            g1.fill(240, 100, 160, 200);
+            g1.ellipse(-20, 16, 32, 42);
+            g1.ellipse(20, 16, 32, 42);
+            
+            g1.fill(255, 255, 255, 230);
+            g1.ellipse(-24, -18, 20, 28);
+            g1.ellipse(24, -18, 20, 28);
+            
+            g1.stroke(40);
+            g1.strokeWeight(3);
+            g1.line(0, -22, -12, -38);
+            g1.line(0, -22, 12, -38);
+            g1.noStroke();
+            g1.fill(30);
+            g1.ellipse(0, 0, 10, 48);
+            g1.pop();
+
+            // Frame 2: Wings Folded / Narrowed
+            let g2 = createGraphics(size, size);
+            g2.pixelDensity(window.devicePixelRatio || 1);
+            g2.clear();
+            g2.push();
+            g2.translate(center, center);
+            
+            g2.noStroke();
+            g2.fill(60, 180, 220, 220);
+            g2.ellipse(-10, -14, 20, 62);
+            g2.ellipse(10, -14, 20, 62);
+            g2.fill(240, 100, 160, 200);
+            g2.ellipse(-8, 16, 14, 42);
+            g2.ellipse(8, 16, 14, 42);
+            
+            g2.fill(255, 255, 255, 230);
+            g2.ellipse(-9, -18, 10, 28);
+            g2.ellipse(9, -18, 10, 28);
+            
+            g2.stroke(40);
+            g2.strokeWeight(3);
+            g2.line(0, -22, -6, -38);
+            g2.line(0, -22, 6, -38);
+            g2.noStroke();
+            g2.fill(30);
+            g2.ellipse(0, 0, 8, 48);
+            g2.pop();
+
+            defaultBfSprites = [g1.canvas, g2.canvas];
+        }
+
         function generateAllSprites() {
             spriteCache = {};
-            const spriteSize = Math.max(32, config.charSize * 2); 
+            const spriteSize = Math.max(32, config.charSize * 2.5); 
             const center = spriteSize / 2;
 
             let colorsToGenerate = ['default'].concat(vibrantColors);
@@ -283,7 +457,6 @@
 
                 for (let shape of shapesToGenerate) {
                     if (shape === 'char') {
-                        // Generate all characters
                         for (let i = 0; i < chars.length; i++) {
                             let charVal = chars[i];
                             let key = `${colKey}_char_${charVal}`;
@@ -299,7 +472,6 @@
                             spriteCache[key] = g.canvas;
                         }
                     } else if (shape === 'star') {
-                        // Generate flat star
                         let key = `${colKey}_star`;
                         let g = getOrCreateGraphics(key, spriteSize);
                         
@@ -323,7 +495,6 @@
                         
                         spriteCache[key] = g.canvas;
                     } else if (shape === 'moon') {
-                        // Generate flat crescent moon
                         let key = `${colKey}_moon`;
                         let g = getOrCreateGraphics(key, spriteSize);
                         
@@ -333,12 +504,9 @@
                         g.translate(center, center);
                         
                         let moonSize = config.charSize * 1.1;
-                        
-                        // Draw outer circle
                         g.fill(activeColor);
                         g.ellipse(0, 0, moonSize);
                         
-                        // Erase inner circle to make it a sharp crescent
                         g.erase();
                         g.ellipse(-moonSize * 0.2, -moonSize * 0.2, moonSize * 0.95);
                         g.noErase();
@@ -349,10 +517,15 @@
                     }
                 }
             }
+            generateDefaultButterflySprites();
         }
 
         const uiBindings = [
+            { inputId: 'global-scale', valId: 'scale-val', key: 'globalScale', parse: parseFloat, suffix: 'x' },
+            { inputId: 'bf-size', valId: 'bf-size-val', key: 'butterflySize', parse: parseInt, suffix: 'px' },
+            { inputId: 'bf-flap-speed', valId: 'bf-flap-val', key: 'flapSpeed', parse: parseFloat, suffix: 'x' },
             { inputId: 'bg-color', valId: 'bg-val', key: 'bgColor', parse: null },
+            { inputId: 'bg-color-2', valId: 'bg-val-2', key: 'bgColor2', parse: null },
             { inputId: 'char-color', valId: 'char-val', key: 'charColor', parse: null },
             { inputId: 'stem-color', valId: 'stem-val', key: 'stemColor', parse: null },
             { inputId: 'stem-width', valId: 'thick-val', key: 'stemWidth', parse: parseFloat },
@@ -377,14 +550,19 @@
                     valEl.innerText = binding.suffix ? val + binding.suffix : val;
                     config[binding.key] = val;
 
-                    if (binding.key === 'bgColor') {
-                        document.body.style.backgroundColor = config.bgColor;
+                    if (binding.key === 'bgColor' || binding.key === 'bgColor2') {
+                        document.body.style.background = `linear-gradient(to bottom, ${config.bgColor}, ${config.bgColor2})`;
                     }
                     if (binding.key === 'charColor' || binding.key === 'charSize') {
                         generateAllSprites();
                     }
                     if (binding.key === 'branchLength' || binding.key === 'density' || binding.key === 'clustering' || binding.key === 'treeSpread') {
                         generateBranches();
+                        // Un-perch butterfly if its branch gets recreated
+                        if (butterfly.state === 'PERCHED') {
+                            butterfly.state = 'FLYING';
+                            pickNewButterflyTarget();
+                        }
                     }
                 });
             }
@@ -398,6 +576,43 @@
         setupToggle('wheat-wave-toggle', 'wheatWave');
         setupToggle('colorful-toggle', 'colorfulMode');
         setupToggle('transform-toggle', 'transformMode');
+
+        // File Upload Handlers for Custom 2-Frame Butterfly
+        function handleButterflyFileUpload(fileInputId, labelId, frameNum) {
+            const fileInput = document.getElementById(fileInputId);
+            const label = document.getElementById(labelId);
+            
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            if (frameNum === 1) butterfly.customImg1 = img;
+                            if (frameNum === 2) butterfly.customImg2 = img;
+                            label.innerText = file.name;
+                            label.classList.add('bg-blue-100', 'text-blue-800', 'border-blue-300');
+                        };
+                        img.src = event.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+        handleButterflyFileUpload('bf-file1', 'bf-label1', 1);
+        handleButterflyFileUpload('bf-file2', 'bf-label2', 2);
+
+        document.getElementById('reset-bf-img').addEventListener('click', () => {
+            butterfly.customImg1 = null;
+            butterfly.customImg2 = null;
+            document.getElementById('bf-label1').innerText = 'Frame 1 (展开)';
+            document.getElementById('bf-label2').innerText = 'Frame 2 (收拢)';
+            document.getElementById('bf-label1').className = 'file-input-btn';
+            document.getElementById('bf-label2').className = 'file-input-btn';
+            document.getElementById('bf-file1').value = '';
+            document.getElementById('bf-file2').value = '';
+        });
 
         document.getElementById('toggle-ui').addEventListener('click', () => {
             document.getElementById('ui-panel').classList.add('translate-x-[120%]');
@@ -424,8 +639,9 @@
             document.getElementById('wheat-wave-toggle').checked = config.wheatWave;
             document.getElementById('colorful-toggle').checked = config.colorfulMode;
             document.getElementById('transform-toggle').checked = config.transformMode;
+            document.getElementById('reset-bf-img').click();
             
-            document.body.style.backgroundColor = config.bgColor;
+            document.body.style.background = `linear-gradient(to bottom, ${config.bgColor}, ${config.bgColor2})`;
             
             isWaterfall = false;
             isFadingOut = false;
@@ -433,6 +649,7 @@
             if (pg) pg.clear();
             generateAllSprites();
             generateBranches();
+            initButterfly();
         });
 
         class WillowBranch {
@@ -479,7 +696,6 @@
                 this.currentDetachSeg = this.numSegments;
             }
             
-            // Helper to dynamically get the proper assigned sprite when dropping
             spawnParticle(x, y, scale, angle, baseChar) {
                 let isColorful = config.colorfulMode;
                 let isTransform = config.transformMode;
@@ -490,8 +706,8 @@
 
                 if (isTransform) {
                     shapeType = random(['star', 'moon']);
-                    cVal = ''; // Char not needed for stars/moons
-                    angle = random(TWO_PI); // Give moons/stars a random spin
+                    cVal = ''; 
+                    angle = random(TWO_PI); 
                 }
 
                 let cacheKey = shapeType === 'char' ? `${colKey}_char_${cVal}` : `${colKey}_${shapeType}`;
@@ -562,7 +778,6 @@
                             }
                         }
                     } else if (!isFadingOut) {
-                        // Continuous waterfall spigot
                         this.spawnParticle(
                             this.rootX + random(-15, 15),
                             random(-20, 0),
@@ -578,7 +793,6 @@
                 let ctx = ctxParam || (typeof drawingContext !== 'undefined' ? drawingContext : null);
                 if (!ctx || typeof ctx.beginPath !== 'function') return;
 
-                // Render stem line
                 if (this.segments.length > 1) {
                     ctx.beginPath();
                     ctx.moveTo(this.segments[0].x, this.segments[0].y);
@@ -592,11 +806,9 @@
                     ctx.globalAlpha = 1.0;
                 }
 
-                // Render attached leaves (Always normal character until detached)
                 for (let leaf of this.leaves) {
                     let p = this.segments[leaf.segIdx];
                     if (p) {
-                        // Tree leaves are strictly default color characters
                         let spriteCanvas = spriteCache[`default_char_${leaf.char}`];
                         if (spriteCanvas) {
                             let drawSize = config.charSize * leaf.scaleMod;
@@ -611,16 +823,204 @@
             }
         }
 
+        function initButterfly() {
+            butterfly.x = width * 0.3;
+            butterfly.y = height * 0.3;
+            butterfly.vx = random(-1.5, 1.5);
+            butterfly.vy = random(-1.5, 1.5);
+            butterfly.state = 'FLYING';
+            butterfly.perchTimer = 0;
+            butterfly.flapPhase = 0;
+            butterfly.bobPhase = random(100);
+            pickNewButterflyTarget();
+        }
+
+        function pickNewButterflyTarget() {
+            if (branches.length === 0) return;
+            
+            // Choose a random branch line
+            let bIdx = floor(random(branches.length));
+            let b = branches[bIdx];
+            if (b && b.segments && b.segments.length > 5) {
+                // Select a segment on upper to mid branch lines so landing is strictly on stem lines!
+                let maxSeg = min(floor(b.segments.length * 0.75), b.segments.length - 1);
+                let minSeg = max(3, floor(b.segments.length * 0.15));
+                let segIdx = floor(random(minSeg, maxSeg));
+                
+                butterfly.perchBranchIdx = bIdx;
+                butterfly.perchSegIdx = segIdx;
+                // Minimal offset to stay locked right on the branch line stem
+                butterfly.perchOffsetX = random(-2, 2);
+                butterfly.perchOffsetY = random(-2, 2);
+                
+                let p = b.segments[segIdx];
+                if (p) {
+                    butterfly.targetX = p.x + butterfly.perchOffsetX;
+                    butterfly.targetY = p.y + butterfly.perchOffsetY;
+                }
+            } else {
+                butterfly.targetX = random(width * 0.3, width * 0.7);
+                butterfly.targetY = random(height * 0.15, height * 0.45);
+            }
+        }
+
+        function updateButterfly() {
+            const statusEl = document.getElementById('bf-status');
+
+            if (butterfly.state === 'FLEEING') {
+                if (statusEl) statusEl.innerText = "Spooked (Escaping)";
+                let fleeTargetX = width + 250;
+                let fleeTargetY = -250;
+                
+                let dx = fleeTargetX - butterfly.x;
+                let dy = fleeTargetY - butterfly.y;
+                let dist = Math.sqrt(dx * dx + dy * dy);
+                
+                // Natural fleeing: smooth steering away + erratic panic fluttering
+                if (dist > 0) {
+                    butterfly.vx += (dx / dist) * 0.18; // Gentle directional acceleration
+                    butterfly.vy += (dy / dist) * 0.18;
+                }
+                
+                // Add slight updraft lift
+                butterfly.vy -= 0.1;
+                
+                // Friction for realistic air resistance limit (prevents instant teleporting)
+                butterfly.vx *= 0.96;
+                butterfly.vy *= 0.96;
+                
+                // Panic flutter (high frequency, high amplitude noise)
+                let noiseAngle = noise(simTime * 0.12, butterfly.x * 0.02) * TWO_PI * 2;
+                let flutterX = Math.cos(noiseAngle) * 3.5;
+                let flutterY = Math.sin(noiseAngle) * 3.5;
+                
+                // Apply final movement
+                let actualVx = butterfly.vx + flutterX;
+                let actualVy = butterfly.vy + flutterY;
+                
+                butterfly.x += actualVx;
+                butterfly.y += actualVy;
+                
+                // Smooth rotation towards movement
+                let targetAngle = Math.atan2(actualVy, actualVx) + HALF_PI;
+                butterfly.angle = lerp(butterfly.angle, targetAngle, 0.15);
+                
+                // Flap furiously
+                butterfly.flapPhase += config.flapSpeed * 0.55;
+                return;
+            }
+
+            // Real-time tracking of target segment on moving branch line
+            if (butterfly.perchBranchIdx >= 0 && branches[butterfly.perchBranchIdx]) {
+                let b = branches[butterfly.perchBranchIdx];
+                if (b && b.segments && b.segments[butterfly.perchSegIdx]) {
+                    let p = b.segments[butterfly.perchSegIdx];
+                    butterfly.targetX = p.x + butterfly.perchOffsetX;
+                    butterfly.targetY = p.y + butterfly.perchOffsetY;
+                }
+            }
+
+            if (butterfly.state === 'PERCHED') {
+                if (statusEl) statusEl.innerText = "Perched on Branch Line";
+                // Lock directly onto branch segment line as tree sways in wind
+                let b = branches[butterfly.perchBranchIdx];
+                if (b && b.segments && b.segments[butterfly.perchSegIdx]) {
+                    let p = b.segments[butterfly.perchSegIdx];
+                    butterfly.x = p.x + butterfly.perchOffsetX;
+                    butterfly.y = p.y + butterfly.perchOffsetY;
+                }
+
+                butterfly.perchTimer--;
+                // Gentle resting wing flaps
+                butterfly.flapPhase += config.flapSpeed * 0.04;
+                butterfly.angle = lerp(butterfly.angle, 0, 0.08);
+
+                if (butterfly.perchTimer <= 0) {
+                    butterfly.state = 'FLYING';
+                    pickNewButterflyTarget();
+                }
+            } else if (butterfly.state === 'FLYING') {
+                if (statusEl) statusEl.innerText = "Agile Flying in Wind";
+                
+                let dx = butterfly.targetX - butterfly.x;
+                let dy = butterfly.targetY - butterfly.y;
+                let dist = Math.sqrt(dx * dx + dy * dy);
+
+                // High agile erratic fluttering: rapid vertical bobbing & random organic noise impulses
+                let noiseAngle = noise(butterfly.x * 0.008, butterfly.y * 0.008, simTime * 0.035) * TWO_PI * 2;
+                let flutterX = Math.cos(noiseAngle) * 2.2;
+                let flutterY = Math.sin(noiseAngle) * 2.2;
+                let verticalBob = Math.sin(simTime * 0.25 + butterfly.bobPhase) * 2.8;
+                let horizontalJitter = Math.cos(simTime * 0.2) * 1.5;
+
+                // Land on branch line when close enough
+                if (dist < 18) {
+                    butterfly.state = 'PERCHED';
+                    butterfly.perchTimer = floor(random(160, 420));
+                } else {
+                    let speedFactor = constrain(dist * 0.06, 1.2, 3.8);
+                    let steerX = (dx / dist) * speedFactor;
+                    let steerY = (dy / dist) * speedFactor;
+
+                    // Smooth steering with erratic wind & flight impulses
+                    butterfly.vx = lerp(butterfly.vx, steerX + flutterX + horizontalJitter * 0.4, 0.12);
+                    butterfly.vy = lerp(butterfly.vy, steerY + flutterY + verticalBob * 0.5, 0.12);
+
+                    butterfly.x += butterfly.vx;
+                    butterfly.y += butterfly.vy;
+
+                    let targetAngle = Math.atan2(butterfly.vy, butterfly.vx) + HALF_PI;
+                    butterfly.angle = lerp(butterfly.angle, targetAngle + Math.sin(simTime * 0.3) * 0.18, 0.2);
+                    
+                    // User adjustable flapping rate
+                    butterfly.flapPhase += config.flapSpeed * 0.28;
+                }
+            }
+        }
+
+        function drawButterfly(ctxParam) {
+            let ctx = ctxParam || (typeof drawingContext !== 'undefined' ? drawingContext : null);
+            if (!ctx) return;
+
+            let flapVal = Math.sin(butterfly.flapPhase);
+            let useFrame2 = flapVal > 0;
+
+            let drawSize = config.butterflySize;
+
+            ctx.save();
+            ctx.translate(butterfly.x, butterfly.y);
+            ctx.rotate(butterfly.angle);
+
+            if (useFrame2) {
+                if (butterfly.customImg2) {
+                    ctx.drawImage(butterfly.customImg2, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+                } else if (defaultBfSprites[1]) {
+                    ctx.drawImage(defaultBfSprites[1], -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+                }
+            } else {
+                if (butterfly.customImg1) {
+                    ctx.drawImage(butterfly.customImg1, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+                } else if (defaultBfSprites[0]) {
+                    ctx.drawImage(defaultBfSprites[0], -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+                }
+            }
+            ctx.restore();
+        }
+
         function setup() {
             let canvas = createCanvas(windowWidth, windowHeight);
             canvas.style('display', 'block');
-            document.body.style.backgroundColor = config.bgColor;
+            
+            pixelDensity(window.devicePixelRatio || 1);
+            document.body.style.background = `linear-gradient(to bottom, ${config.bgColor}, ${config.bgColor2})`;
             
             pg = createGraphics(windowWidth, windowHeight); 
+            pg.pixelDensity(window.devicePixelRatio || 1);
             imageMode(CENTER);
             
             generateAllSprites();
             generateBranches();
+            initButterfly();
         }
 
         function generateBranches() {
@@ -647,20 +1047,45 @@
 
         function windowResized() {
             resizeCanvas(windowWidth, windowHeight);
-            if (pg) pg.resizeCanvas(windowWidth, windowHeight);
+            pixelDensity(window.devicePixelRatio || 1);
+            if (pg) {
+                pg.resizeCanvas(windowWidth, windowHeight);
+                pg.pixelDensity(window.devicePixelRatio || 1);
+            }
             generateBranches(); 
+            initButterfly();
         }
 
         function draw() {
             simTime++;
-            background(config.bgColor);
+            
+            // Draw smooth background linear gradient
+            if (drawingContext) {
+                let bgGrad = drawingContext.createLinearGradient(0, 0, 0, height);
+                bgGrad.addColorStop(0, config.bgColor);
+                bgGrad.addColorStop(1, config.bgColor2);
+                drawingContext.fillStyle = bgGrad;
+                drawingContext.fillRect(0, 0, width, height);
+            } else {
+                background(config.bgColor);
+            }
+
+            // Apply global crisp scale transform centered relative to screen width
+            push();
+            let s = config.globalScale;
+            translate(width / 2, 0);
+            scale(s);
+            translate(-width / 2, 0);
 
             // 1. Update branch physics
             for (let b of branches) {
                 b.update(simTime, config.windForce);
             }
 
-            // 2. Process High-Performance Offscreen Particle Layer
+            // 2. Update Agile Butterfly Physics & AI
+            updateButterfly();
+
+            // 3. Process High-Performance Offscreen Particle Layer
             if (isWaterfall && pg && pg.drawingContext) {
                 let pctx = pg.drawingContext;
 
@@ -685,11 +1110,9 @@
                         p.g = 0;
                         p.y += 0.5 * config.fallRate; 
                         
-                        // Add slight rotation to shapes as they fall
                         if (config.transformMode) p.angle += 0.03;
                     }
 
-                    // Blazing fast O(1) cached texture stamp
                     if (p.spriteCanvas) {
                         let alpha = Math.min(1.0, Math.max(0.05, (p.s / config.charSize) * 1.2));
                         pctx.save();
@@ -710,13 +1133,18 @@
                 imageMode(CENTER);
             }
 
-            // 3. Render tree branches to main canvas
+            // 4. Render tree branches to main canvas
             let mainCtx = typeof drawingContext !== 'undefined' ? drawingContext : null;
             if (mainCtx) {
                 for (let b of branches) {
                     b.draw(mainCtx);
                 }
+                
+                // 5. Render Animated Butterfly
+                drawButterfly(mainCtx);
             }
+
+            pop();
         }
 
         function keyPressed() {
@@ -727,6 +1155,16 @@
                     particles = [];
                     if (pg) pg.clear();
                     generateBranches();
+                    
+                    // Bring butterfly back naturally if it flew offscreen
+                    butterfly.state = 'FLYING';
+                    if (butterfly.x > width + 100 || butterfly.x < -100 || butterfly.y < -100 || butterfly.y > height + 100) {
+                        butterfly.x = -50;
+                        butterfly.y = height * 0.3;
+                        butterfly.vx = 4;
+                        butterfly.vy = -1;
+                    }
+                    pickNewButterflyTarget();
                 } else {
                     isWaterfall = true;
                     isFadingOut = false;
@@ -734,6 +1172,14 @@
                     for (let b of branches) {
                         b.startDetaching();
                     }
+                    // Ensure butterfly is visible right before escaping if it was lost
+                    if (butterfly.x > width + 100 || butterfly.x < -100 || butterfly.y < -100 || butterfly.y > height + 100) {
+                        butterfly.x = width * 0.5;
+                        butterfly.y = height * 0.5;
+                        butterfly.vx = 0;
+                        butterfly.vy = -2;
+                    }
+                    butterfly.state = 'FLEEING';
                 }
             } else if (keyCode === 32) { 
                 if (isWaterfall) {

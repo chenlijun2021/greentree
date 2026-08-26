@@ -138,6 +138,15 @@
                 <input type="range" id="density" min="30" max="250" value="100" class="w-full accent-green-600">
             </div>
 
+            <!-- Tree Spread (New) -->
+            <div>
+                <label class="flex justify-between text-xs font-medium text-gray-600 mb-1">
+                    <span>Tree Spread (左右宽度)</span>
+                    <span id="spread-val" class="text-gray-400">100%</span>
+                </label>
+                <input type="range" id="tree-spread" min="20" max="100" value="100" class="w-full accent-green-600">
+            </div>
+
             <!-- Cluster Variation -->
             <div>
                 <label class="flex justify-between text-xs font-medium text-gray-600 mb-1">
@@ -194,6 +203,7 @@
             charSize: 14,
             branchLength: 75,
             density: 100,
+            treeSpread: 100,
             clustering: 70,
             windForce: 35,
             fallRate: 1.0,
@@ -220,6 +230,7 @@
             { inputId: 'char-size', valId: 'size-val', key: 'charSize', parse: parseInt },
             { inputId: 'branch-length', valId: 'length-val', key: 'branchLength', parse: parseInt },
             { inputId: 'density', valId: 'density-val', key: 'density', parse: parseInt },
+            { inputId: 'tree-spread', valId: 'spread-val', key: 'treeSpread', parse: parseInt, suffix: '%' },
             { inputId: 'cluster-var', valId: 'cluster-val', key: 'clustering', parse: parseInt },
             { inputId: 'wind-force', valId: 'wind-val', key: 'windForce', parse: parseInt },
             { inputId: 'fall-rate', valId: 'rate-val', key: 'fallRate', parse: parseFloat },
@@ -242,7 +253,7 @@
                     if (binding.key === 'charColor' || binding.key === 'charSize') {
                         generateLetterSprites();
                     }
-                    if (binding.key === 'branchLength' || binding.key === 'density' || binding.key === 'clustering') {
+                    if (binding.key === 'branchLength' || binding.key === 'density' || binding.key === 'clustering' || binding.key === 'treeSpread') {
                         generateBranches();
                     }
                 });
@@ -349,10 +360,7 @@
                 this.currentDetachSeg = this.numSegments;
             }
 
-            updateAndDraw(t, wForce, ctxParam) {
-                let ctx = ctxParam || (typeof drawingContext !== 'undefined' ? drawingContext : null);
-                if (!ctx || typeof ctx.beginPath !== 'function') return;
-
+            update(t, wForce) {
                 let currentX = this.rootX;
                 let currentY = 0; 
                 this.segments = [{x: currentX, y: currentY}];
@@ -367,7 +375,6 @@
                         let waveSpeed = t * 0.04;
                         let spatialWave1 = Math.sin(this.rootX * 0.015 - waveSpeed) * 0.5;
                         let spatialWave2 = Math.cos(this.rootX * 0.035 + waveSpeed * 1.3 + noise(this.rootX * 0.02) * 4.0) * 0.35;
-                        // Map the raw pulse to range [0.3, 1.0] to prevent the wind from ever completely stopping (0.0)
                         let rawPulse = Math.sin(this.rootX * 0.006 + waveSpeed * 0.6);
                         let wavePulse = 0.3 + 0.7 * Math.pow((rawPulse + 1) / 2, 1.5);
                         let gust = (noise(this.rootX * 0.008, t * 0.012) * 2 - 1) * 0.6;
@@ -421,6 +428,11 @@
                         });
                     }
                 }
+            }
+
+            draw(ctxParam) {
+                let ctx = ctxParam || (typeof drawingContext !== 'undefined' ? drawingContext : null);
+                if (!ctx || typeof ctx.beginPath !== 'function') return;
 
                 // Render stem line with configurable thickness and opacity
                 if (this.segments.length > 1) {
@@ -468,18 +480,20 @@
 
         function generateBranches() {
             branches = [];
-            let targetCount = floor((width / 14) * (config.density / 100));
+            let spreadPx = width * (config.treeSpread / 100);
+            let targetCount = floor((spreadPx / 14) * (config.density / 100));
+            let startOffset = (width - spreadPx) / 2;
             
             for (let i = 0; i < targetCount; i++) {
-                let normI = i / Math.max(1, targetCount - 1);
+                let normI = targetCount > 1 ? i / (targetCount - 1) : 0.5;
                 let posX;
                 
                 if (config.clustering > 0) {
                     let clusterNoise = noise(normI * (config.clustering * 0.08) + 12.3);
                     let nonLinearX = (normI * 0.65 + clusterNoise * 0.35);
-                    posX = constrain(nonLinearX * width + random(-15, 15), 15, width - 15);
+                    posX = startOffset + constrain(nonLinearX * spreadPx + random(-15, 15), 15, Math.max(15, spreadPx - 15));
                 } else {
-                    posX = (width / targetCount) * i + random(-15, 15);
+                    posX = startOffset + (spreadPx / targetCount) * i + random(-15, 15);
                 }
                 
                 branches.push(new WillowBranch(posX));
@@ -496,7 +510,12 @@
             simTime++;
             background(config.bgColor);
 
-            // Handle waterfall particles on the offscreen trail buffer
+            // 1. Update branch physics FIRST so leaves perfectly detach into the waterfall buffer below
+            for (let b of branches) {
+                b.update(simTime, config.windForce);
+            }
+
+            // 2. Handle waterfall particles on the offscreen trail buffer
             if (isWaterfall && pg && pg.drawingContext) {
                 let pctx = pg.drawingContext;
 
@@ -526,7 +545,8 @@
 
                     let sprite = letterSprites[p.char];
                     if (sprite && sprite.canvas) {
-                        let alpha = Math.max(0.05, p.s / config.charSize);
+                        // Boost initial alpha slightly to guarantee smooth transition from branch leaf
+                        let alpha = Math.min(1.0, Math.max(0.05, (p.s / config.charSize) * 1.2));
                         pctx.save();
                         pctx.globalAlpha = alpha;
                         pctx.translate(p.x, p.y);
@@ -546,11 +566,11 @@
                 imageMode(CENTER);
             }
 
-            // Render crisp tree branches and leaves onto the main canvas
+            // 3. Render crisp tree branches and attached leaves onto the main canvas
             let mainCtx = typeof drawingContext !== 'undefined' ? drawingContext : null;
             if (mainCtx) {
                 for (let b of branches) {
-                    b.updateAndDraw(simTime, config.windForce, mainCtx);
+                    b.draw(mainCtx);
                 }
             }
         }
